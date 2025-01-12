@@ -1,48 +1,46 @@
-import path from 'path';
 import {app, BrowserWindow, Menu, nativeImage, Tray} from 'electron';
-import {is} from "electron-util";
+import path from 'path';
 
-export default (window: BrowserWindow) => {
-  const size = is.macos ? 16 : 32;
-  const trayIcon = new Tray(nativeImage.createFromPath(path.join(app.getAppPath(), `resources/icons/offline/${size}.png`)));
+const isMacOS = process.platform === 'darwin';
+const isLinux = process.platform === 'linux';
 
-  const handleIconClick = () => {
-    const shouldHide = is.windows ? (window.isVisible() || window.isFocused()) : (window.isVisible() && window.isFocused());
+export default (window: BrowserWindow): Tray => {
+  const iconSize = isMacOS ? 16 : 32;
+  const iconPath = path.join(app.getAppPath(), `resources/icons/normal/${iconSize}.png`);
+  const tray = new Tray(nativeImage.createFromPath(iconPath));
 
-    if (shouldHide) {
-      if (is.macos) {
-        app.hide()
-      } else {
-        window.hide()
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show Window',
+      click: () => {
+        window.show();
       }
-    } else {
-      window.show()
-    }
-  }
-
-  trayIcon.setContextMenu(Menu.buildFromTemplate([
-    {
-      label: 'Toggle',
-      click: handleIconClick
     },
     {
-      type: 'separator'
+      label: 'Hide Window',
+      click: () => {
+        window.hide();
+      }
     },
+    {type: 'separator'},
     {
       label: 'Quit',
       click: () => {
-        // The running webpage can prevent the app from quiting via window.onbeforeunload handler
-        // So lets use exit() instead of quit()
-        app.exit()
+        app.quit();
       }
     }
-  ]));
+  ]);
 
-  trayIcon.setToolTip('Google Chat');
+  tray.setToolTip(app.name);
+  tray.setContextMenu(contextMenu);
 
-  if (is.windows) {
-    trayIcon.on('click', handleIconClick);
-  }
+  tray.on('click', () => {
+    if (window.isVisible()) {
+      window.hide();
+    } else {
+      window.show();
+    }
+  });
 
-  return trayIcon;
+  return tray;
 }

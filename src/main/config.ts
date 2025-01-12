@@ -1,5 +1,5 @@
 import Store from 'electron-store';
-import {Rectangle} from 'electron';
+import type {Rectangle} from 'electron';
 
 type StoreType = {
   window: {
@@ -79,7 +79,9 @@ const schema: Store.Schema<StoreType> = {
   }
 }
 
-export default new Store<StoreType>({
+const store = new Store<StoreType>({
   schema,
   clearInvalidConfig: true
 });
+
+export default store;

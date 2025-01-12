@@ -6,11 +6,13 @@ export default (url: string): BrowserWindow => {
   const window = new BrowserWindow({
     webPreferences: {
       autoplayPolicy: 'user-gesture-required',
-      contextIsolation: false,
+      contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
-      disableBlinkFeatures: 'Auxclick', // Security
+      sandbox: true,
+      disableBlinkFeatures: 'Auxclick',
       preload: path.join(app.getAppPath(), 'lib/preload/index.js'),
+      spellcheck: !store.get('app.disableSpellChecker'),
+      webSecurity: true,
     },
     icon: nativeImage.createFromPath(path.join(app.getAppPath(), 'resources/icons/normal/256.png')),
     show: false,
@@ -26,10 +28,11 @@ export default (url: string): BrowserWindow => {
     if (!store.get('app.startHidden')) {
       window.show();
     }
-    window.webContents.session.setSpellCheckerEnabled( !store.get('app.disableSpellChecker') );
   });
 
-  window.loadURL(url);
+  window.loadURL(url, {
+    userAgent: app.userAgentFallback
+  });
 
   return window;
 };

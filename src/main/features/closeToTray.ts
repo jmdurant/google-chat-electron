@@ -1,24 +1,31 @@
-import {BrowserWindow, app} from 'electron';
-import {is} from "electron-util";
+import {app, BrowserWindow} from 'electron';
+import store from '../config.js';
 
-let willQuit = false;
+const isMacOS = process.platform === 'darwin';
+let isQuitting = false;
 
 export default (window: BrowserWindow) => {
-
-  // Allow Mac users to exit from app via Dock context menu "Quit" item
+  // Handle quit from dock menu (macOS)
   app.on('before-quit', () => {
-    willQuit = true
-  })
+    isQuitting = true;
+  });
 
   window.on('close', (event) => {
-    if (!willQuit) {
+    if (!isQuitting) {
       event.preventDefault();
+      window.hide();
 
-      if (is.macos) {
-        app.hide();
-      } else {
-        window.hide();
+      // On macOS, minimize on close
+      if (isMacOS) {
+        app.dock.hide();
       }
     }
-  })
+  });
+
+  // Restore dock icon when window is shown (macOS)
+  window.on('show', () => {
+    if (isMacOS) {
+      app.dock.show();
+    }
+  });
 }

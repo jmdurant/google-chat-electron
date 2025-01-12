@@ -1,34 +1,20 @@
-import {ipcMain, app, nativeImage, BrowserWindow, Tray} from 'electron';
+import {app, BrowserWindow, nativeImage, Tray} from 'electron';
 import path from 'path';
-import {is} from "electron-util";
 
-type IconTypes = 'offline' | 'normal' | 'badge';
+const isMacOS = process.platform === 'darwin';
+const isLinux = process.platform === 'linux';
 
-// Decide app icon based on favicon URL
-const decideIcon = (href: string): IconTypes => {
-  let type: IconTypes = 'offline';
+export default (window: BrowserWindow, tray: Tray) => {
+  window.on('page-title-updated', (_event, title) => {
+    const unreadCount = parseInt(title.match(/\((\d+)\)/)?.[1] || '0');
+    app.setBadgeCount(unreadCount);
 
-  if (href.match(/favicon_chat_r2/) ||
-    href.match(/favicon_chat_new_non_notif_r2/)) {
-    type = 'normal';
-  } else if (href.match(/favicon_chat_new_notif_r2/)) {
-    type = 'badge';
-  }
-
-  return type;
-}
-
-export default (window: BrowserWindow, trayIcon: Tray) => {
-
-  ipcMain.on('faviconChanged', (evt, href) => {
-    const type = decideIcon(String(href));
-
-    const size = is.macos ? 16 : 32;
-    const icon = nativeImage.createFromPath(path.join(app.getAppPath(), `resources/icons/${type}/${size}.png`))
-    trayIcon.setImage(icon);
-  });
-
-  ipcMain.on('unreadCount', (event, count: number) => {
-    app.setBadgeCount(Number(count))
+    if (isMacOS || isLinux) {
+      const iconPath = path.join(app.getAppPath(), unreadCount > 0 ?
+        'resources/icons/unread/256.png' :
+        'resources/icons/normal/256.png'
+      );
+      tray.setImage(nativeImage.createFromPath(iconPath));
+    }
   });
 }
